@@ -54,27 +54,40 @@ const billing = [
   { id: "bill_003", customerId: 3, amount: 999, currency: "USD", status: "overdue" }
 ];
 
+const openApiSpec = {
+  openapi: "3.0.0",
+  info: {
+    title: "NeonBanyan Platform API",
+    version: "1.0.0",
+    description: "API contract for NeonBanyan's demo platform."
+  },
+  paths: {
+    "/health": { get: { summary: "Health check", responses: { "200": { description: "OK" } } } },
+    "/customers": { get: { summary: "List customers", responses: { "200": { description: "OK" } } } },
+    "/customers/{id}": { get: { summary: "Get customer by ID", responses: { "200": { description: "OK" }, "404": { description: "Customer not found" } } } },
+    "/workspaces": { get: { summary: "List workspaces", responses: { "200": { description: "OK" } } } },
+    "/apis": { get: { summary: "List APIs", responses: { "200": { description: "OK" } } } },
+    "/deployments": { get: { summary: "List deployments", responses: { "200": { description: "OK" } } } },
+    "/agents": { get: { summary: "List agents", responses: { "200": { description: "OK" } } } },
+    "/events": { get: { summary: "List events", responses: { "200": { description: "OK" } } } },
+    "/subscriptions": { get: { summary: "List subscriptions", responses: { "200": { description: "OK" } } } },
+    "/billing": { get: { summary: "List billing records", responses: { "200": { description: "OK" } } } },
+    "/auth/login": { post: { summary: "Login user", responses: { "200": { description: "Login successful" }, "400": { description: "Missing email or password" }, "401": { description: "Invalid credentials" } } } },
+    "/slow-api": { get: { summary: "Slow API response", responses: { "200": { description: "Delayed response" } } } },
+    "/random-error": { get: { summary: "Random 500 error", responses: { "200": { description: "Success" }, "500": { description: "Intentional fake error" } } } }
+  }
+};
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
+
 app.get("/", (req, res) => {
   res.json({
     name: "NeonBanyan Platform API",
     version: "1.0.0",
     status: "healthy",
     description: "The unified platform for managing customers, workspaces, APIs, deployments, agents, events, subscriptions, and billing.",
-    openapi: "/openapi.json",
-    endpoints: [
-      "/health",
-      "/customers",
-      "/workspaces",
-      "/apis",
-      "/deployments",
-      "/agents",
-      "/events",
-      "/subscriptions",
-      "/billing",
-      "/auth/login",
-      "/slow-api",
-      "/random-error"
-    ]
+    docs: "/docs",
+    openapi: "/openapi.json"
   });
 });
 
@@ -86,9 +99,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.get("/customers", (req, res) => {
-  res.json(customers);
-});
+app.get("/customers", (req, res) => res.json(customers));
 
 app.get("/customers/:id", (req, res) => {
   const customer = customers.find(c => c.id === Number(req.params.id));
@@ -103,57 +114,29 @@ app.get("/customers/:id", (req, res) => {
   res.json(customer);
 });
 
-app.get("/workspaces", (req, res) => {
-  res.json(workspaces);
-});
-
-app.get("/apis", (req, res) => {
-  res.json(apis);
-});
-
-app.get("/deployments", (req, res) => {
-  res.json(deployments);
-});
-
-app.get("/agents", (req, res) => {
-  res.json(agents);
-});
-
-app.get("/events", (req, res) => {
-  res.json(events);
-});
-
-app.get("/subscriptions", (req, res) => {
-  res.json(subscriptions);
-});
-
-app.get("/billing", (req, res) => {
-  res.json(billing);
-});
+app.get("/workspaces", (req, res) => res.json(workspaces));
+app.get("/apis", (req, res) => res.json(apis));
+app.get("/deployments", (req, res) => res.json(deployments));
+app.get("/agents", (req, res) => res.json(agents));
+app.get("/events", (req, res) => res.json(events));
+app.get("/subscriptions", (req, res) => res.json(subscriptions));
+app.get("/billing", (req, res) => res.json(billing));
 
 app.post("/auth/login", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({
-      error: "Email and password are required"
-    });
+    return res.status(400).json({ error: "Email and password are required" });
   }
 
   if (email === "demo@neonbanyan.io" && password === "password123") {
     return res.json({
       token: "fake_neonbanyan_jwt_token_12345",
-      user: {
-        id: 1,
-        email,
-        role: "admin"
-      }
+      user: { id: 1, email, role: "admin" }
     });
   }
 
-  res.status(401).json({
-    error: "Invalid credentials"
-  });
+  res.status(401).json({ error: "Invalid credentials" });
 });
 
 app.get("/slow-api", async (req, res) => {
@@ -180,29 +163,7 @@ app.get("/random-error", (req, res) => {
 });
 
 app.get("/openapi.json", (req, res) => {
-  res.json({
-    openapi: "3.0.0",
-    info: {
-      title: "NeonBanyan Platform API",
-      version: "1.0.0",
-      description: "API contract for NeonBanyan's demo platform."
-    },
-    paths: {
-      "/health": { get: { summary: "Health check" } },
-      "/customers": { get: { summary: "List customers" } },
-      "/customers/{id}": { get: { summary: "Get customer by ID" } },
-      "/workspaces": { get: { summary: "List workspaces" } },
-      "/apis": { get: { summary: "List APIs" } },
-      "/deployments": { get: { summary: "List deployments" } },
-      "/agents": { get: { summary: "List agents" } },
-      "/events": { get: { summary: "List events" } },
-      "/subscriptions": { get: { summary: "List subscriptions" } },
-      "/billing": { get: { summary: "List billing records" } },
-      "/auth/login": { post: { summary: "Login user" } },
-      "/slow-api": { get: { summary: "Slow API response" } },
-      "/random-error": { get: { summary: "Random 500 error" } }
-    }
-  });
+  res.json(openApiSpec);
 });
 
 app.listen(PORT, () => {
