@@ -6,27 +6,83 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const customers = [
-  { id: 1, name: "Acme Bank", plan: "Enterprise", region: "EU" },
-  { id: 2, name: "Nova Health", plan: "Team", region: "India" },
-  { id: 3, name: "Orbit Retail", plan: "Starter", region: "US" }
+  { id: 1, name: "Aurora Finance", plan: "Enterprise", region: "EU" },
+  { id: 2, name: "MossGrid Health", plan: "Growth", region: "India" },
+  { id: 3, name: "OrbitLeaf Retail", plan: "Starter", region: "US" }
 ];
 
-const orders = [
-  { id: 101, customerId: 1, amount: 12000, status: "paid" },
-  { id: 102, customerId: 2, amount: 4500, status: "pending" },
-  { id: 103, customerId: 3, amount: 999, status: "failed" }
+const workspaces = [
+  { id: "ws_001", customerId: 1, name: "Core Banking Workspace", status: "active" },
+  { id: "ws_002", customerId: 2, name: "Patient Experience Workspace", status: "active" },
+  { id: "ws_003", customerId: 3, name: "Retail Ops Workspace", status: "trial" }
+];
+
+const apis = [
+  { id: "api_001", workspaceId: "ws_001", name: "Payments API", environment: "production", score: 91 },
+  { id: "api_002", workspaceId: "ws_002", name: "Appointments API", environment: "staging", score: 84 },
+  { id: "api_003", workspaceId: "ws_003", name: "Inventory API", environment: "production", score: 72 }
+];
+
+const deployments = [
+  { id: "dep_001", apiId: "api_001", version: "v1.4.2", status: "successful" },
+  { id: "dep_002", apiId: "api_002", version: "v2.1.0", status: "successful" },
+  { id: "dep_003", apiId: "api_003", version: "v1.0.8", status: "failed" }
+];
+
+const agents = [
+  { id: "agent_001", name: "Policy Scanner", status: "active", task: "governance" },
+  { id: "agent_002", name: "Security Sentinel", status: "active", task: "threat detection" },
+  { id: "agent_003", name: "Latency Watcher", status: "paused", task: "performance" }
+];
+
+const events = [
+  { id: "evt_001", type: "api.created", source: "Payments API", severity: "info" },
+  { id: "evt_002", type: "deployment.failed", source: "Inventory API", severity: "warning" },
+  { id: "evt_003", type: "security.anomaly", source: "Appointments API", severity: "critical" }
+];
+
+const subscriptions = [
+  { id: "sub_001", customerId: 1, plan: "Enterprise", status: "active" },
+  { id: "sub_002", customerId: 2, plan: "Growth", status: "trialing" },
+  { id: "sub_003", customerId: 3, plan: "Starter", status: "cancelled" }
+];
+
+const billing = [
+  { id: "bill_001", customerId: 1, amount: 24000, currency: "USD", status: "paid" },
+  { id: "bill_002", customerId: 2, amount: 7200, currency: "USD", status: "open" },
+  { id: "bill_003", customerId: 3, amount: 999, currency: "USD", status: "overdue" }
 ];
 
 app.get("/", (req, res) => {
   res.json({
-    message: "Fake Live API is running",
+    name: "NeonBanyan Platform API",
+    version: "1.0.0",
+    status: "healthy",
+    description: "The unified platform for managing customers, workspaces, APIs, deployments, agents, events, subscriptions, and billing.",
     openapi: "/openapi.json",
-    endpoints: ["/health", "/customers", "/customers/1", "/orders", "/random-error"]
+    endpoints: [
+      "/health",
+      "/customers",
+      "/workspaces",
+      "/apis",
+      "/deployments",
+      "/agents",
+      "/events",
+      "/subscriptions",
+      "/billing",
+      "/auth/login",
+      "/slow-api",
+      "/random-error"
+    ]
   });
 });
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    service: "neonbanyan-platform-api",
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get("/customers", (req, res) => {
@@ -37,107 +93,117 @@ app.get("/customers/:id", (req, res) => {
   const customer = customers.find(c => c.id === Number(req.params.id));
 
   if (!customer) {
-    return res.status(404).json({ error: "Customer not found" });
+    return res.status(404).json({
+      error: "Customer not found",
+      customerId: req.params.id
+    });
   }
 
   res.json(customer);
 });
 
-app.get("/orders", (req, res) => {
-  res.json(orders);
+app.get("/workspaces", (req, res) => {
+  res.json(workspaces);
 });
 
-app.post("/orders", (req, res) => {
-  const order = {
-    id: Math.floor(Math.random() * 100000),
-    customerId: req.body.customerId || 1,
-    amount: req.body.amount || 1000,
-    status: "paid"
-  };
+app.get("/apis", (req, res) => {
+  res.json(apis);
+});
 
-  orders.push(order);
-  res.status(201).json(order);
+app.get("/deployments", (req, res) => {
+  res.json(deployments);
+});
+
+app.get("/agents", (req, res) => {
+  res.json(agents);
+});
+
+app.get("/events", (req, res) => {
+  res.json(events);
+});
+
+app.get("/subscriptions", (req, res) => {
+  res.json(subscriptions);
+});
+
+app.get("/billing", (req, res) => {
+  res.json(billing);
+});
+
+app.post("/auth/login", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      error: "Email and password are required"
+    });
+  }
+
+  if (email === "demo@neonbanyan.io" && password === "password123") {
+    return res.json({
+      token: "fake_neonbanyan_jwt_token_12345",
+      user: {
+        id: 1,
+        email,
+        role: "admin"
+      }
+    });
+  }
+
+  res.status(401).json({
+    error: "Invalid credentials"
+  });
+});
+
+app.get("/slow-api", async (req, res) => {
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  res.json({
+    message: "This response was intentionally delayed by 3 seconds",
+    service: "NeonBanyan Platform API"
+  });
 });
 
 app.get("/random-error", (req, res) => {
   if (Math.random() < 0.35) {
     return res.status(500).json({
       error: "Fake internal server error",
-      reason: "Intentional demo failure"
+      reason: "Intentional NeonBanyan demo failure"
     });
   }
 
-  res.json({ message: "No error this time" });
+  res.json({
+    message: "No error this time",
+    service: "NeonBanyan Platform API"
+  });
 });
 
 app.get("/openapi.json", (req, res) => {
   res.json({
     openapi: "3.0.0",
     info: {
-      title: "Fake Live API",
-      version: "1.0.0"
+      title: "NeonBanyan Platform API",
+      version: "1.0.0",
+      description: "API contract for NeonBanyan's demo platform."
     },
     paths: {
-      "/health": {
-        get: {
-          summary: "Health check",
-          responses: {
-            "200": { description: "API is healthy" }
-          }
-        }
-      },
-      "/customers": {
-        get: {
-          summary: "List customers",
-          responses: {
-            "200": { description: "List of customers" }
-          }
-        }
-      },
-      "/customers/{id}": {
-        get: {
-          summary: "Get customer by ID",
-          parameters: [
-            {
-              name: "id",
-              in: "path",
-              required: true,
-              schema: { type: "integer" }
-            }
-          ],
-          responses: {
-            "200": { description: "Customer found" },
-            "404": { description: "Customer not found" }
-          }
-        }
-      },
-      "/orders": {
-        get: {
-          summary: "List orders",
-          responses: {
-            "200": { description: "List of orders" }
-          }
-        },
-        post: {
-          summary: "Create order",
-          responses: {
-            "201": { description: "Order created" }
-          }
-        }
-      },
-      "/random-error": {
-        get: {
-          summary: "Randomly returns success or 500 error",
-          responses: {
-            "200": { description: "Success" },
-            "500": { description: "Intentional fake error" }
-          }
-        }
-      }
+      "/health": { get: { summary: "Health check" } },
+      "/customers": { get: { summary: "List customers" } },
+      "/customers/{id}": { get: { summary: "Get customer by ID" } },
+      "/workspaces": { get: { summary: "List workspaces" } },
+      "/apis": { get: { summary: "List APIs" } },
+      "/deployments": { get: { summary: "List deployments" } },
+      "/agents": { get: { summary: "List agents" } },
+      "/events": { get: { summary: "List events" } },
+      "/subscriptions": { get: { summary: "List subscriptions" } },
+      "/billing": { get: { summary: "List billing records" } },
+      "/auth/login": { post: { summary: "Login user" } },
+      "/slow-api": { get: { summary: "Slow API response" } },
+      "/random-error": { get: { summary: "Random 500 error" } }
     }
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`API running on port ${PORT}`);
+  console.log(`NeonBanyan Platform API running on port ${PORT}`);
 });
