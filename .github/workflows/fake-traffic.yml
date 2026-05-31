@@ -1,4 +1,4 @@
-name: Demo Live API Traffic
+name: NeonBanyan Traffic Generator
 
 on:
   schedule:
@@ -6,21 +6,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  hit-api:
+  generate-traffic:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send fake traffic
+      - name: Generate API Traffic
         run: |
-          API_URL="https://demo-live-api-harsha-test.unkey.app"
+          BASE_URL="https://demo-live-api-harsha-test.unkey.app"
 
-          for i in {1..20}
+          ENDPOINTS=(
+            "/"
+            "/health"
+            "/customers"
+            "/customers/1"
+            "/customers/999"
+            "/workspaces"
+            "/apis"
+            "/deployments"
+            "/agents"
+            "/events"
+            "/subscriptions"
+            "/billing"
+            "/slow-api"
+            "/random-error"
+          )
+
+          for i in {1..50}
           do
-            ENDPOINTS=("/" "/health" "/customers" "/customers/1" "/customers/999" "/orders" "/random-error")
             RANDOM_ENDPOINT=${ENDPOINTS[$RANDOM % ${#ENDPOINTS[@]}]}
 
-            echo "Calling $API_URL$RANDOM_ENDPOINT"
-            curl -s -o /dev/null -w "%{http_code}\n" "$API_URL$RANDOM_ENDPOINT"
+            curl -s \
+              -o /dev/null \
+              -w "%{http_code}\n" \
+              "$BASE_URL$RANDOM_ENDPOINT"
 
             sleep 2
           done
